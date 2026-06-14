@@ -5,15 +5,17 @@ import {
   Stack,
   NumberInput,
   Textarea,
-  Group,
-  Button,
+  SimpleGrid,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconAlertCircle, IconCheck, IconDeviceFloppy, IconX } from '@tabler/icons-react';
+import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
 import { supabase } from '../lib/supabase';
+import { useIsMobile } from '../hooks/useIsMobile';
+import ModalFormActions from './ModalFormActions';
 
 export default function EditScooterLogModal({ opened, onClose, record, onSuccess }) {
   const [submitting, setSubmitting] = useState(false);
+  const isMobile = useIsMobile();
 
   const form = useForm({
     initialValues: {
@@ -119,7 +121,9 @@ export default function EditScooterLogModal({ opened, onClose, record, onSuccess
       onClose={onClose}
       title="Edit Record"
       centered
-      size="md"
+      fullScreen={isMobile}
+      size={isMobile ? undefined : 'md'}
+      padding={isMobile ? 'md' : 'lg'}
       overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
     >
       <form onSubmit={form.onSubmit(handleSubmit)}>
@@ -129,14 +133,16 @@ export default function EditScooterLogModal({ opened, onClose, record, onSuccess
             min={0}
             decimalScale={1}
             required
+            size="md"
             {...form.getInputProps('odo')}
           />
-          <Group grow align="flex-start">
+          <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="md">
             <NumberInput
               label="Battery Before (%)"
               min={0}
               max={100}
               required
+              size="md"
               {...form.getInputProps('battery_before')}
             />
             <NumberInput
@@ -144,15 +150,17 @@ export default function EditScooterLogModal({ opened, onClose, record, onSuccess
               min={0}
               max={100}
               required
+              size="md"
               {...form.getInputProps('battery_after')}
             />
-          </Group>
-          <Group grow align="flex-start">
+          </SimpleGrid>
+          <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="md">
             <NumberInput
               label="Charge kWh"
               min={0}
               decimalScale={2}
               required
+              size="md"
               {...form.getInputProps('charge_kwh')}
             />
             <NumberInput
@@ -160,34 +168,20 @@ export default function EditScooterLogModal({ opened, onClose, record, onSuccess
               min={0}
               decimalScale={0}
               required
+              size="md"
               {...form.getInputProps('charge_minutes')}
             />
-          </Group>
+          </SimpleGrid>
           <Textarea
             label="Notes"
             placeholder="Optional notes..."
             minRows={3}
             {...form.getInputProps('notes')}
           />
-          <Group justify="flex-end">
-            <Button
-              variant="subtle"
-              color="gray"
-              onClick={onClose}
-              disabled={submitting}
-              leftSection={<IconX size={16} />}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              color="green"
-              loading={submitting}
-              leftSection={<IconDeviceFloppy size={16} />}
-            >
-              Save Changes
-            </Button>
-          </Group>
+          <ModalFormActions
+            onCancel={onClose}
+            submitting={submitting}
+          />
         </Stack>
       </form>
     </Modal>

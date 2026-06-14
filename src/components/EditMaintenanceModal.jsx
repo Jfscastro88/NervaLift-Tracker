@@ -5,14 +5,14 @@ import {
   Stack,
   NumberInput,
   Textarea,
-  Group,
-  Button,
   Select,
   TextInput,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconAlertCircle, IconCheck, IconDeviceFloppy, IconX } from '@tabler/icons-react';
+import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
 import { supabase } from '../lib/supabase';
+import { useIsMobile } from '../hooks/useIsMobile';
+import ModalFormActions from './ModalFormActions';
 
 const MAINTENANCE_TYPES = [
   'Revisione',
@@ -24,6 +24,7 @@ const MAINTENANCE_TYPES = [
 
 export default function EditMaintenanceModal({ opened, onClose, record, onSuccess }) {
   const [submitting, setSubmitting] = useState(false);
+  const isMobile = useIsMobile();
 
   const form = useForm({
     initialValues: {
@@ -110,7 +111,9 @@ export default function EditMaintenanceModal({ opened, onClose, record, onSucces
       onClose={onClose}
       title="Edit Maintenance"
       centered
-      size="md"
+      fullScreen={isMobile}
+      size={isMobile ? undefined : 'md'}
+      padding={isMobile ? 'md' : 'lg'}
       overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
     >
       <form onSubmit={form.onSubmit(handleSubmit)}>
@@ -119,6 +122,7 @@ export default function EditMaintenanceModal({ opened, onClose, record, onSucces
             label="Date"
             type="date"
             required
+            size="md"
             {...form.getInputProps('date')}
           />
           <NumberInput
@@ -126,6 +130,7 @@ export default function EditMaintenanceModal({ opened, onClose, record, onSucces
             placeholder="Optional"
             min={0}
             decimalScale={0}
+            size="md"
             {...form.getInputProps('odo')}
           />
           <Select
@@ -134,6 +139,7 @@ export default function EditMaintenanceModal({ opened, onClose, record, onSucces
             data={MAINTENANCE_TYPES}
             required
             searchable
+            size="md"
             {...form.getInputProps('type')}
           />
           <NumberInput
@@ -141,6 +147,7 @@ export default function EditMaintenanceModal({ opened, onClose, record, onSucces
             min={0}
             decimalScale={2}
             required
+            size="md"
             {...form.getInputProps('cost')}
           />
           <Textarea
@@ -149,25 +156,10 @@ export default function EditMaintenanceModal({ opened, onClose, record, onSucces
             minRows={3}
             {...form.getInputProps('notes')}
           />
-          <Group justify="flex-end">
-            <Button
-              variant="subtle"
-              color="gray"
-              onClick={onClose}
-              disabled={submitting}
-              leftSection={<IconX size={16} />}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              color="green"
-              loading={submitting}
-              leftSection={<IconDeviceFloppy size={16} />}
-            >
-              Save Changes
-            </Button>
-          </Group>
+          <ModalFormActions
+            onCancel={onClose}
+            submitting={submitting}
+          />
         </Stack>
       </form>
     </Modal>

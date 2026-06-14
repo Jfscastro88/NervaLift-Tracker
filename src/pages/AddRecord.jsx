@@ -2,19 +2,19 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from '@mantine/form';
 import {
-  Title,
   Text,
   NumberInput,
   Textarea,
   Button,
   Stack,
   Paper,
-  Group,
   Alert,
+  SimpleGrid,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
 import { supabase } from '../lib/supabase';
+import PageHeader from '../components/PageHeader';
 
 export default function AddRecord() {
   const navigate = useNavigate();
@@ -124,18 +124,14 @@ export default function AddRecord() {
   }
 
   return (
-    <Stack gap="xl" maw={600} mx="auto" w="100%">
-      <Stack gap={4}>
-        <Title order={2} c="white">
-          Add Record
-        </Title>
-        <Text c="dimmed" size="sm">
-          Log a new charging session
-        </Text>
-      </Stack>
+    <Stack gap={{ base: 'lg', sm: 'xl' }} maw={600} mx="auto" w="100%">
+      <PageHeader
+        title="Add Record"
+        subtitle="Log a new charging session"
+      />
 
       <Paper
-        p="xl"
+        p={{ base: 'md', sm: 'xl' }}
         radius="md"
         bg="dark.8"
         style={{ border: '1px solid var(--mantine-color-dark-5)' }}
@@ -159,15 +155,17 @@ export default function AddRecord() {
               min={0}
               decimalScale={1}
               required
+              size="md"
               {...form.getInputProps('odo')}
             />
-            <Group grow align="flex-start">
+            <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="md">
               <NumberInput
                 label="Battery before charge (%)"
                 placeholder="e.g. 20"
                 min={0}
                 max={100}
                 required
+                size="md"
                 {...form.getInputProps('battery_before')}
               />
               <NumberInput
@@ -176,29 +174,30 @@ export default function AddRecord() {
                 min={0}
                 max={100}
                 required
+                size="md"
                 {...form.getInputProps('battery_after')}
               />
-            </Group>
-            <Group grow align="flex-start">
-              <NumberInput
-                label="Charged energy (kWh)"
-                placeholder="e.g. 1.2"
-                min={0}
-                decimalScale={2}
-                required
-                {...form.getInputProps('charge_kwh')}
-              />
-            </Group>
+            </SimpleGrid>
+            <NumberInput
+              label="Charged energy (kWh)"
+              placeholder="e.g. 1.2"
+              min={0}
+              decimalScale={2}
+              required
+              size="md"
+              {...form.getInputProps('charge_kwh')}
+            />
             <Stack gap={4}>
               <Text size="sm" fw={500}>
                 Charging time
               </Text>
-              <Group grow align="flex-start">
+              <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="md">
                 <NumberInput
                   label="Hours"
                   placeholder="1"
                   min={0}
                   decimalScale={0}
+                  size="md"
                   {...form.getInputProps('charge_hours')}
                 />
                 <NumberInput
@@ -207,9 +206,10 @@ export default function AddRecord() {
                   min={0}
                   max={59}
                   decimalScale={0}
+                  size="md"
                   {...form.getInputProps('charge_minutes')}
                 />
-              </Group>
+              </SimpleGrid>
               <Text size="xs" c="dimmed">
                 e.g. 1h 10m, or leave hours empty and enter 50 for 50 minutes
               </Text>
@@ -220,14 +220,20 @@ export default function AddRecord() {
               minRows={3}
               {...form.getInputProps('notes')}
             />
-            <Group mt="sm">
-              <Button type="submit" color="green" loading={submitting}>
+            <Stack gap="sm" mt="sm">
+              <Button type="submit" color="green" loading={submitting} fullWidth size="md">
                 Save Record
               </Button>
-              <Button variant="subtle" color="gray" onClick={() => navigate('/')}>
+              <Button
+                variant="subtle"
+                color="gray"
+                onClick={() => navigate('/')}
+                fullWidth
+                size="md"
+              >
                 Cancel
               </Button>
-            </Group>
+            </Stack>
           </Stack>
         </form>
       </Paper>

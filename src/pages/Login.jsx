@@ -15,6 +15,7 @@ import {
   Box,
   Divider,
   ThemeIcon,
+  SimpleGrid,
 } from "@mantine/core";
 import {
   IconBolt,
@@ -66,16 +67,16 @@ export default function Login() {
 
   return (
     <Box mih="100vh" bg="#0a0a0a" style={{ display: "flex", flexDirection: "column" }}>
-      <Container size="lg" py={{ base: "xl", md: 60 }} style={{ flex: 1 }}>
-        <Grid gutter={{ base: "xl", md: 48 }} align="center">
-          <Grid.Col span={{ base: 12, md: 6 }}>
-            <Stack gap="xl">
+      <Container size="lg" py={{ base: "lg", sm: "xl", md: 60 }} px={{ base: "md", sm: "lg" }} style={{ flex: 1 }}>
+        <Grid gutter={{ base: "xl", md: 48 }} align="stretch">
+          <Grid.Col span={{ base: 12, md: 6 }} order={{ base: 1, md: 1 }}>
+            <Stack gap={{ base: "lg", sm: "xl" }}>
               <Stack gap="md">
-                <Group gap="sm">
+                <Group gap="sm" align="flex-start" wrap="nowrap">
                   <ThemeIcon size={44} radius="md" variant="light" color="green">
                     <IconBolt size={24} />
                   </ThemeIcon>
-                  <Stack gap={2}>
+                  <Stack gap={2} style={{ minWidth: 0 }}>
                     <Title order={1} c="white" size="h2">
                       Nerva Lift - Tracker
                     </Title>
@@ -85,7 +86,7 @@ export default function Login() {
                   </Stack>
                 </Group>
 
-                <Text c="gray.4" size="md" maw={440} lh={1.6}>
+                <Text c="gray.4" size="md" lh={1.6}>
                   Track charging sessions, maintenance, accessories and scooter statistics from a
                   single dashboard.
                 </Text>
@@ -107,21 +108,21 @@ export default function Login() {
               <Divider color="dark.5" />
 
               <Stack gap="md">
-                <Title order={4} c="white">
+                <Title order={4} c="white" size="h5">
                   About the Developer
                 </Title>
                 <Stack gap="xs">
                   <Text fw={600} c="white">
                     João Felipe Soares Castro
                   </Text>
-                  <Text c="gray.4" size="sm" maw={440} lh={1.6}>
+                  <Text c="gray.4" size="sm" lh={1.6}>
                     Hobby programmer passionate about web development, automation and building
                     useful personal tools.
                   </Text>
                   <Text c="dimmed" size="sm" mt="xs">
                     This project was built using:
                   </Text>
-                  <Group gap="xs">
+                  <SimpleGrid cols={{ base: 2, xs: 4 }} spacing="xs">
                     {TECH_STACK.map((tech) => (
                       <Text
                         key={tech}
@@ -129,6 +130,7 @@ export default function Login() {
                         c="gray.4"
                         px="sm"
                         py={4}
+                        ta="center"
                         style={{
                           borderRadius: "var(--mantine-radius-sm)",
                           border: "1px solid var(--mantine-color-dark-5)",
@@ -138,10 +140,38 @@ export default function Login() {
                         {tech}
                       </Text>
                     ))}
-                  </Group>
+                  </SimpleGrid>
                 </Stack>
 
-                <Group gap="sm" mt="xs">
+                <Stack gap="sm" mt="xs" hiddenFrom="xs">
+                  <Button
+                    component="a"
+                    href={GITHUB_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    variant="light"
+                    color="gray"
+                    leftSection={<IconBrandGithub size={18} />}
+                    fullWidth
+                    size="md"
+                  >
+                    GitHub
+                  </Button>
+                  <Button
+                    component="a"
+                    href={LINKEDIN_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    variant="light"
+                    color="blue"
+                    leftSection={<IconBrandLinkedin size={18} />}
+                    fullWidth
+                    size="md"
+                  >
+                    LinkedIn
+                  </Button>
+                </Stack>
+                <Group gap="sm" mt="xs" visibleFrom="xs">
                   <Button
                     component="a"
                     href={GITHUB_URL}
@@ -169,13 +199,14 @@ export default function Login() {
             </Stack>
           </Grid.Col>
 
-          <Grid.Col span={{ base: 12, md: 6 }}>
+          <Grid.Col span={{ base: 12, md: 6 }} order={{ base: 2, md: 2 }}>
             <Paper
-              p={{ base: "lg", sm: "xl" }}
+              p={{ base: "md", sm: "xl" }}
               radius="lg"
               bg="dark.8"
-              maw={440}
-              mx={{ base: "auto", md: 0 }}
+              w="100%"
+              maw={{ base: "100%", md: 440 }}
+              mx={{ base: 0, md: "auto" }}
               ml={{ md: "auto" }}
               style={{
                 border: "1px solid var(--mantine-color-dark-5)",
@@ -205,6 +236,7 @@ export default function Login() {
                       placeholder="you@example.com"
                       type="email"
                       required
+                      size="md"
                       value={email}
                       onChange={(event) => setEmail(event.currentTarget.value)}
                     />
@@ -212,6 +244,7 @@ export default function Login() {
                       label="Password"
                       placeholder="Your password"
                       required
+                      size="md"
                       value={password}
                       onChange={(event) => setPassword(event.currentTarget.value)}
                     />
@@ -235,6 +268,7 @@ export default function Login() {
 
       <Box
         py="md"
+        px="md"
         style={{
           borderTop: "1px solid var(--mantine-color-dark-6)",
           backgroundColor: "var(--mantine-color-dark-9)",

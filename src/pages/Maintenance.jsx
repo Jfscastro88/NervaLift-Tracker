@@ -18,6 +18,7 @@ import {
   Center,
   Select,
   TextInput,
+  Box,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -32,6 +33,8 @@ import { supabase } from '../lib/supabase';
 import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
 import EditMaintenanceModal from '../components/EditMaintenanceModal';
 import TableRowActions from '../components/TableRowActions';
+import DataMobileCard from '../components/DataMobileCard';
+import PageHeader from '../components/PageHeader';
 import {
   calculateMaintenanceStats,
   formatCurrency,
@@ -240,15 +243,11 @@ export default function Maintenance() {
   }
 
   return (
-    <Stack gap="xl">
-      <Stack gap={4}>
-        <Title order={2} c="white">
-          Maintenance
-        </Title>
-        <Text c="dimmed" size="sm">
-          Track service, repairs, and upkeep costs
-        </Text>
-      </Stack>
+    <Stack gap={{ base: 'lg', sm: 'xl' }}>
+      <PageHeader
+        title="Maintenance"
+        subtitle="Track service, repairs, and upkeep costs"
+      />
 
       {stats && (
         <SimpleGrid cols={{ base: 1, xs: 2, md: 4 }} spacing="md">
@@ -283,12 +282,10 @@ export default function Maintenance() {
       )}
 
       <Paper
-        p="xl"
+        p={{ base: 'md', sm: 'xl' }}
         radius="md"
         bg="dark.8"
         style={{ border: '1px solid var(--mantine-color-dark-5)' }}
-        maw={600}
-        mx="auto"
         w="100%"
       >
         {error && (
@@ -308,6 +305,7 @@ export default function Maintenance() {
               label="Date"
               type="date"
               required
+              size="md"
               {...form.getInputProps('date')}
             />
             <NumberInput
@@ -315,6 +313,7 @@ export default function Maintenance() {
               placeholder="Optional"
               min={0}
               decimalScale={0}
+              size="md"
               {...form.getInputProps('odo')}
             />
             <Select
@@ -323,6 +322,7 @@ export default function Maintenance() {
               data={MAINTENANCE_TYPES}
               required
               searchable
+              size="md"
               {...form.getInputProps('type')}
             />
             <NumberInput
@@ -331,6 +331,7 @@ export default function Maintenance() {
               min={0}
               decimalScale={2}
               required
+              size="md"
               {...form.getInputProps('cost')}
             />
             <Textarea
@@ -339,7 +340,7 @@ export default function Maintenance() {
               minRows={3}
               {...form.getInputProps('notes')}
             />
-            <Button type="submit" color="green" loading={submitting}>
+            <Button type="submit" color="green" loading={submitting} fullWidth size="md">
               Save Maintenance
             </Button>
           </Stack>
@@ -353,11 +354,13 @@ export default function Maintenance() {
       >
         <Stack gap={0}>
           <Group
-            px="lg"
+            px={{ base: 'md', sm: 'lg' }}
             py="md"
+            wrap="wrap"
+            gap="sm"
             style={{ borderBottom: '1px solid var(--mantine-color-dark-5)' }}
           >
-            <Title order={4} c="white">
+            <Title order={4} c="white" size="h5">
               Maintenance History
             </Title>
             <Text size="sm" c="dimmed">
@@ -366,16 +369,19 @@ export default function Maintenance() {
           </Group>
 
           {records.length === 0 ? (
-            <Center py="xl">
-              <Text c="dimmed">No maintenance records yet.</Text>
+            <Center py="xl" px="md">
+              <Text c="dimmed" ta="center">No maintenance records yet.</Text>
             </Center>
           ) : (
-            <ScrollArea>
-              <Table
-                striped
-                highlightOnHover
-                withTableBorder={false}
-                styles={{
+            <>
+              <Box visibleFrom="sm">
+                <ScrollArea type="auto" offsetScrollbars>
+                  <Table
+                    striped
+                    highlightOnHover
+                    withTableBorder={false}
+                    miw={700}
+                    styles={{
                   th: {
                     backgroundColor: 'var(--mantine-color-dark-7)',
                     color: 'var(--mantine-color-gray-4)',
@@ -425,7 +431,32 @@ export default function Maintenance() {
                   ))}
                 </Table.Tbody>
               </Table>
-            </ScrollArea>
+                </ScrollArea>
+              </Box>
+
+              <Stack gap="sm" p="md" hiddenFrom="sm">
+                {records.map((record) => (
+                  <DataMobileCard
+                    key={record.id}
+                    title={record.type}
+                    subtitle={formatDate(record.date)}
+                    onEdit={() => handleEdit(record)}
+                    onDelete={() => handleDeleteClick(record)}
+                    fields={[
+                      {
+                        label: 'ODO',
+                        value:
+                          record.odo !== null && record.odo !== undefined
+                            ? `${record.odo} km`
+                            : '—',
+                      },
+                      { label: 'Cost', value: formatCurrency(Number(record.cost)) },
+                      { label: 'Notes', value: record.notes || '—' },
+                    ]}
+                  />
+                ))}
+              </Stack>
+            </>
           )}
         </Stack>
       </Paper>

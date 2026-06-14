@@ -8,6 +8,7 @@ import {
   Center,
   Alert,
   SimpleGrid,
+  Box,
 } from '@mantine/core';
 import { IconAlertCircle } from '@tabler/icons-react';
 import {
@@ -32,17 +33,14 @@ import {
   calculateAccessoriesStats,
   formatCurrency,
 } from '../lib/expenseCalculations';
+import PageHeader from '../components/PageHeader';
+import { useIsMobile, useIsSmallScreen } from '../hooks/useIsMobile';
 
 const CHART_COLORS = {
   line: 'var(--mantine-color-green-5)',
   bar: 'var(--mantine-color-blue-5)',
   maintenance: 'var(--mantine-color-orange-5)',
   accessories: 'var(--mantine-color-pink-5)',
-};
-
-const AXIS_STYLE = {
-  stroke: 'var(--mantine-color-gray-5)',
-  tick: { fill: 'var(--mantine-color-gray-5)', fontSize: 12 },
 };
 
 const GRID_STYLE = {
@@ -56,22 +54,23 @@ const TOOLTIP_STYLE = {
     border: '1px solid var(--mantine-color-dark-5)',
     borderRadius: 'var(--mantine-radius-md)',
     color: 'var(--mantine-color-gray-2)',
+    fontSize: 12,
   },
   labelStyle: { color: 'var(--mantine-color-gray-3)' },
   itemStyle: { color: 'var(--mantine-color-gray-2)' },
 };
 
-function ChartCard({ title, subtitle, children, empty, emptyMessage }) {
+function ChartCard({ title, subtitle, children, empty, emptyMessage, chartHeight }) {
   return (
     <Card
-      padding="lg"
+      padding={{ base: 'md', sm: 'lg' }}
       radius="md"
       bg="dark.8"
-      style={{ border: '1px solid var(--mantine-color-dark-5)' }}
+      style={{ border: '1px solid var(--mantine-color-dark-5)', overflow: 'hidden' }}
     >
       <Stack gap="md">
         <Stack gap={2}>
-          <Title order={4} c="white">
+          <Title order={4} c="white" size="h5">
             {title}
           </Title>
           <Text size="sm" c="dimmed">
@@ -79,13 +78,15 @@ function ChartCard({ title, subtitle, children, empty, emptyMessage }) {
           </Text>
         </Stack>
         {empty ? (
-          <Center h={280}>
-            <Text c="dimmed" size="sm" ta="center">
+          <Center h={chartHeight}>
+            <Text c="dimmed" size="sm" ta="center" px="md">
               {emptyMessage}
             </Text>
           </Center>
         ) : (
-          children
+          <Box w="100%" style={{ overflow: 'hidden' }}>
+            {children}
+          </Box>
         )}
       </Stack>
     </Card>
@@ -103,10 +104,23 @@ function buildScooterChartData(enrichedRecords) {
 }
 
 export default function Analytics() {
+  const isMobile = useIsMobile();
+  const isSmallScreen = useIsSmallScreen();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [scooterChartData, setScooterChartData] = useState([]);
   const [expenseData, setExpenseData] = useState([]);
+
+  const chartHeight = isSmallScreen ? 220 : isMobile ? 260 : 280;
+  const pieHeight = isSmallScreen ? 260 : isMobile ? 300 : 320;
+
+  const axisStyle = useMemo(
+    () => ({
+      stroke: 'var(--mantine-color-gray-5)',
+      tick: { fill: 'var(--mantine-color-gray-5)', fontSize: isSmallScreen ? 10 : 12 },
+    }),
+    [isSmallScreen],
+  );
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -176,15 +190,11 @@ export default function Analytics() {
   }
 
   return (
-    <Stack gap="xl">
-      <Stack gap={4}>
-        <Title order={2} c="white">
-          Analytics
-        </Title>
-        <Text c="dimmed" size="sm">
-          Consumption trends and expense breakdown
-        </Text>
-      </Stack>
+    <Stack gap={{ base: 'lg', sm: 'xl' }}>
+      <PageHeader
+        title="Analytics"
+        subtitle="Consumption trends and expense breakdown"
+      />
 
       <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="md">
         <ChartCard
@@ -192,15 +202,26 @@ export default function Analytics() {
           subtitle="kWh per km over time"
           empty={scooterChartData.length === 0}
           emptyMessage="Not enough charging records yet. Add at least two logs to see consumption trends."
+          chartHeight={chartHeight}
         >
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={scooterChartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+          <ResponsiveContainer width="100%" height={chartHeight}>
+            <LineChart
+              data={scooterChartData}
+              margin={{ top: 8, right: 4, left: isSmallScreen ? -12 : 0, bottom: 0 }}
+            >
               <CartesianGrid {...GRID_STYLE} />
-              <XAxis dataKey="date" {...AXIS_STYLE} interval="preserveStartEnd" />
+              <XAxis
+                dataKey="date"
+                {...axisStyle}
+                interval="preserveStartEnd"
+                angle={isSmallScreen ? -35 : 0}
+                textAnchor={isSmallScreen ? 'end' : 'middle'}
+                height={isSmallScreen ? 50 : 30}
+              />
               <YAxis
-                {...AXIS_STYLE}
+                {...axisStyle}
                 tickFormatter={(value) => formatNumber(value, 3)}
-                width={48}
+                width={isSmallScreen ? 42 : 48}
               />
               <Tooltip
                 {...TOOLTIP_STYLE}
@@ -211,8 +232,8 @@ export default function Analytics() {
                 dataKey="kwhPerKm"
                 stroke={CHART_COLORS.line}
                 strokeWidth={2}
-                dot={{ fill: CHART_COLORS.line, r: 4 }}
-                activeDot={{ r: 6 }}
+                dot={{ fill: CHART_COLORS.line, r: isSmallScreen ? 3 : 4 }}
+                activeDot={{ r: isSmallScreen ? 5 : 6 }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -223,15 +244,26 @@ export default function Analytics() {
           subtitle="Distance traveled between charges"
           empty={scooterChartData.length === 0}
           emptyMessage="Not enough charging records yet. Add at least two logs to see distance per charge."
+          chartHeight={chartHeight}
         >
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={scooterChartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+          <ResponsiveContainer width="100%" height={chartHeight}>
+            <BarChart
+              data={scooterChartData}
+              margin={{ top: 8, right: 4, left: isSmallScreen ? -12 : 0, bottom: 0 }}
+            >
               <CartesianGrid {...GRID_STYLE} />
-              <XAxis dataKey="date" {...AXIS_STYLE} interval="preserveStartEnd" />
+              <XAxis
+                dataKey="date"
+                {...axisStyle}
+                interval="preserveStartEnd"
+                angle={isSmallScreen ? -35 : 0}
+                textAnchor={isSmallScreen ? 'end' : 'middle'}
+                height={isSmallScreen ? 50 : 30}
+              />
               <YAxis
-                {...AXIS_STYLE}
+                {...axisStyle}
                 tickFormatter={(value) => formatNumber(value, 0)}
-                width={40}
+                width={isSmallScreen ? 36 : 40}
               />
               <Tooltip
                 {...TOOLTIP_STYLE}
@@ -248,8 +280,9 @@ export default function Analytics() {
         subtitle="Maintenance vs Accessories"
         empty={expenseTotal === 0}
         emptyMessage="No maintenance or accessory costs recorded yet."
+        chartHeight={pieHeight}
       >
-        <ResponsiveContainer width="100%" height={320}>
+        <ResponsiveContainer width="100%" height={pieHeight}>
           <PieChart>
             <Pie
               data={expenseData}
@@ -257,11 +290,13 @@ export default function Analytics() {
               nameKey="name"
               cx="50%"
               cy="50%"
-              outerRadius="70%"
-              innerRadius="45%"
+              outerRadius={isSmallScreen ? '58%' : '70%'}
+              innerRadius={isSmallScreen ? '38%' : '45%'}
               paddingAngle={2}
-              label={({ name, value }) =>
-                `${name}: ${formatCurrency(value)}`
+              label={
+                isSmallScreen
+                  ? false
+                  : ({ name, value }) => `${name}: ${formatCurrency(value)}`
               }
             >
               <Cell fill={CHART_COLORS.maintenance} />
@@ -272,7 +307,11 @@ export default function Analytics() {
               formatter={(value) => formatCurrency(value)}
             />
             <Legend
-              wrapperStyle={{ color: 'var(--mantine-color-gray-4)' }}
+              wrapperStyle={{
+                color: 'var(--mantine-color-gray-4)',
+                fontSize: isSmallScreen ? 12 : 14,
+                paddingTop: 8,
+              }}
               formatter={(value) => (
                 <span style={{ color: 'var(--mantine-color-gray-3)' }}>{value}</span>
               )}

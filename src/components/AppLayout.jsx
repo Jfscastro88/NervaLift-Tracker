@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { AppShell, Group, Text, Button, Burger, NavLink, Stack } from "@mantine/core";
+import { AppShell, Group, Text, Button, Burger, NavLink, Stack, Box } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import {
   IconDashboard,
@@ -12,14 +12,27 @@ import {
 } from "@tabler/icons-react";
 import { supabase } from "../lib/supabase";
 
+const navLinkStyles = {
+  root: {
+    borderRadius: "var(--mantine-radius-md)",
+    minHeight: 44,
+    padding: "var(--mantine-spacing-sm) var(--mantine-spacing-md)",
+  },
+};
+
 export default function AppLayout({ children }) {
-  const [opened, { toggle }] = useDisclosure();
+  const [opened, { toggle, close }] = useDisclosure();
   const navigate = useNavigate();
   const location = useLocation();
 
   async function handleLogout() {
     await supabase.auth.signOut();
     navigate("/login");
+  }
+
+  function handleNavClick(callback) {
+    callback?.();
+    close();
   }
 
   const navItems = [
@@ -33,26 +46,35 @@ export default function AppLayout({ children }) {
 
   return (
     <AppShell
-      header={{ height: 60 }}
+      header={{ height: { base: 56, sm: 60 } }}
       navbar={{
-        width: 240,
+        width: 260,
         breakpoint: "sm",
         collapsed: { mobile: !opened },
       }}
-      padding="md"
+      padding={{ base: "xs", sm: "md" }}
       bg="black"
     >
       <AppShell.Header
         bg="dark.9"
         style={{ borderBottom: "1px solid var(--mantine-color-dark-6)" }}
       >
-        <Group h="100%" px="md" justify="space-between">
-          <Group>
-            <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
-            <Group gap="xs">
+        <Group h="100%" px={{ base: "sm", sm: "md" }} justify="space-between" wrap="nowrap">
+          <Group gap="xs" wrap="nowrap" style={{ minWidth: 0, flex: 1 }}>
+            <Burger
+              opened={opened}
+              onClick={toggle}
+              hiddenFrom="sm"
+              size="md"
+              aria-label="Toggle navigation"
+            />
+            <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
               <IconBolt size={22} color="var(--mantine-color-green-5)" />
-              <Text fw={700} size="lg" c="white">
+              <Text fw={700} size="lg" c="white" visibleFrom="xs" truncate>
                 NervaLift - FT53666
+              </Text>
+              <Text fw={700} size="md" c="white" hiddenFrom="xs" truncate>
+                NervaLift
               </Text>
             </Group>
           </Group>
@@ -69,7 +91,7 @@ export default function AppLayout({ children }) {
       </AppShell.Header>
 
       <AppShell.Navbar
-        p="md"
+        p={{ base: "sm", sm: "md" }}
         bg="dark.9"
         style={{ borderRight: "1px solid var(--mantine-color-dark-6)" }}
       >
@@ -79,18 +101,11 @@ export default function AppLayout({ children }) {
               <NavLink
                 key={item.label}
                 label={item.label}
-                leftSection={<item.icon size={18} />}
-                onClick={() => {
-                  item.action();
-                  if (opened) toggle();
-                }}
+                leftSection={<item.icon size={20} />}
+                onClick={() => handleNavClick(item.action)}
                 variant="filled"
                 color="dark"
-                styles={{
-                  root: {
-                    borderRadius: "var(--mantine-radius-md)",
-                  },
-                }}
+                styles={navLinkStyles}
               />
             ) : (
               <NavLink
@@ -98,14 +113,15 @@ export default function AppLayout({ children }) {
                 component={Link}
                 to={item.to}
                 label={item.label}
-                leftSection={<item.icon size={18} />}
+                leftSection={<item.icon size={20} />}
                 active={location.pathname === item.to}
-                onClick={() => opened && toggle()}
+                onClick={() => close()}
                 variant="filled"
                 color="dark"
                 styles={{
+                  ...navLinkStyles,
                   root: {
-                    borderRadius: "var(--mantine-radius-md)",
+                    ...navLinkStyles.root,
                     "&[data-active]": {
                       backgroundColor: "var(--mantine-color-dark-6)",
                       color: "var(--mantine-color-green-4)",
@@ -118,7 +134,11 @@ export default function AppLayout({ children }) {
         </Stack>
       </AppShell.Navbar>
 
-      <AppShell.Main bg="black">{children}</AppShell.Main>
+      <AppShell.Main bg="black">
+        <Box maw="100%" style={{ overflowX: "hidden" }}>
+          {children}
+        </Box>
+      </AppShell.Main>
     </AppShell>
   );
 }

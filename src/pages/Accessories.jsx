@@ -19,6 +19,7 @@ import {
   Select,
   TextInput,
   Checkbox,
+  Box,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -33,6 +34,8 @@ import { supabase } from '../lib/supabase';
 import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
 import EditAccessoryModal from '../components/EditAccessoryModal';
 import TableRowActions from '../components/TableRowActions';
+import DataMobileCard from '../components/DataMobileCard';
+import PageHeader from '../components/PageHeader';
 import {
   calculateAccessoriesStats,
   formatCurrency,
@@ -239,15 +242,11 @@ export default function Accessories() {
   }
 
   return (
-    <Stack gap="xl">
-      <Stack gap={4}>
-        <Title order={2} c="white">
-          Accessories
-        </Title>
-        <Text c="dimmed" size="sm">
-          Track add-ons, upgrades, and gear purchases
-        </Text>
-      </Stack>
+    <Stack gap={{ base: 'lg', sm: 'xl' }}>
+      <PageHeader
+        title="Accessories"
+        subtitle="Track add-ons, upgrades, and gear purchases"
+      />
 
       {stats && (
         <SimpleGrid cols={{ base: 1, xs: 2, md: 4 }} spacing="md">
@@ -279,12 +278,10 @@ export default function Accessories() {
       )}
 
       <Paper
-        p="xl"
+        p={{ base: 'md', sm: 'xl' }}
         radius="md"
         bg="dark.8"
         style={{ border: '1px solid var(--mantine-color-dark-5)' }}
-        maw={600}
-        mx="auto"
         w="100%"
       >
         {error && (
@@ -304,12 +301,14 @@ export default function Accessories() {
               label="Purchase date"
               type="date"
               required
+              size="md"
               {...form.getInputProps('purchase_date')}
             />
             <TextInput
               label="Name"
               placeholder="e.g. Top case 35L"
               required
+              size="md"
               {...form.getInputProps('name')}
             />
             <Select
@@ -318,6 +317,7 @@ export default function Accessories() {
               data={ACCESSORY_CATEGORIES}
               required
               searchable
+              size="md"
               {...form.getInputProps('category')}
             />
             <NumberInput
@@ -326,10 +326,12 @@ export default function Accessories() {
               min={0}
               decimalScale={2}
               required
+              size="md"
               {...form.getInputProps('cost')}
             />
             <Checkbox
               label="Installed"
+              size="md"
               {...form.getInputProps('installed', { type: 'checkbox' })}
             />
             <Textarea
@@ -338,7 +340,7 @@ export default function Accessories() {
               minRows={3}
               {...form.getInputProps('notes')}
             />
-            <Button type="submit" color="green" loading={submitting}>
+            <Button type="submit" color="green" loading={submitting} fullWidth size="md">
               Save Accessory
             </Button>
           </Stack>
@@ -352,11 +354,13 @@ export default function Accessories() {
       >
         <Stack gap={0}>
           <Group
-            px="lg"
+            px={{ base: 'md', sm: 'lg' }}
             py="md"
+            wrap="wrap"
+            gap="sm"
             style={{ borderBottom: '1px solid var(--mantine-color-dark-5)' }}
           >
-            <Title order={4} c="white">
+            <Title order={4} c="white" size="h5">
               Accessories List
             </Title>
             <Text size="sm" c="dimmed">
@@ -365,16 +369,19 @@ export default function Accessories() {
           </Group>
 
           {records.length === 0 ? (
-            <Center py="xl">
-              <Text c="dimmed">No accessories yet.</Text>
+            <Center py="xl" px="md">
+              <Text c="dimmed" ta="center">No accessories yet.</Text>
             </Center>
           ) : (
-            <ScrollArea>
-              <Table
-                striped
-                highlightOnHover
-                withTableBorder={false}
-                styles={{
+            <>
+              <Box visibleFrom="sm">
+                <ScrollArea type="auto" offsetScrollbars>
+                  <Table
+                    striped
+                    highlightOnHover
+                    withTableBorder={false}
+                    miw={750}
+                    styles={{
                   th: {
                     backgroundColor: 'var(--mantine-color-dark-7)',
                     color: 'var(--mantine-color-gray-4)',
@@ -422,7 +429,27 @@ export default function Accessories() {
                   ))}
                 </Table.Tbody>
               </Table>
-            </ScrollArea>
+                </ScrollArea>
+              </Box>
+
+              <Stack gap="sm" p="md" hiddenFrom="sm">
+                {records.map((record) => (
+                  <DataMobileCard
+                    key={record.id}
+                    title={record.name}
+                    subtitle={formatDate(record.purchase_date)}
+                    onEdit={() => handleEdit(record)}
+                    onDelete={() => handleDeleteClick(record)}
+                    fields={[
+                      { label: 'Category', value: record.category },
+                      { label: 'Cost', value: formatCurrency(Number(record.cost)) },
+                      { label: 'Installed', value: record.installed ? 'Yes' : 'No' },
+                      { label: 'Notes', value: record.notes || '—' },
+                    ]}
+                  />
+                ))}
+              </Stack>
+            </>
           )}
         </Stack>
       </Paper>

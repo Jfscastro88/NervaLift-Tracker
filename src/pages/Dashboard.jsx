@@ -15,6 +15,7 @@ import {
   Paper,
   SegmentedControl,
   Button,
+  Box,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import {
@@ -33,6 +34,8 @@ import { supabase } from "../lib/supabase";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import EditScooterLogModal from "../components/EditScooterLogModal";
 import TableRowActions from "../components/TableRowActions";
+import DataMobileCard from "../components/DataMobileCard";
+import PageHeader from "../components/PageHeader";
 import {
   enrichRecords,
   computeSummary,
@@ -196,26 +199,36 @@ export default function Dashboard() {
   }
 
   return (
-    <Stack gap="xl">
-      <Group justify="space-between" align="flex-start" wrap="wrap" gap="md">
-        <Stack gap={4}>
-          <Title order={2} c="white">
-            Dashboard
-          </Title>
-          <Text c="dimmed" size="sm">
-            Scooter charging and range overview
-          </Text>
-        </Stack>
-        <Button
-          component={Link}
-          to="/analytics"
-          variant="light"
-          color="green"
-          leftSection={<IconChartBar size={16} />}
-        >
-          View Analytics
-        </Button>
-      </Group>
+    <Stack gap={{ base: "lg", sm: "xl" }}>
+      <PageHeader
+        title="Dashboard"
+        subtitle="Scooter charging and range overview"
+        action={
+          <Button
+            component={Link}
+            to="/analytics"
+            variant="light"
+            color="green"
+            leftSection={<IconChartBar size={16} />}
+            fullWidth
+            visibleFrom="xs"
+            maw={{ base: "100%", xs: "auto" }}
+          >
+            View Analytics
+          </Button>
+        }
+      />
+      <Button
+        component={Link}
+        to="/analytics"
+        variant="light"
+        color="green"
+        leftSection={<IconChartBar size={16} />}
+        fullWidth
+        hiddenFrom="xs"
+      >
+        View Analytics
+      </Button>
 
       {summary && (
         <SimpleGrid cols={{ base: 1, xs: 2, md: 3, lg: 4 }} spacing="md">
@@ -289,13 +302,15 @@ export default function Dashboard() {
       >
         <Stack gap={0}>
           <Group
-            px="lg"
+            px={{ base: "md", sm: "lg" }}
             py="md"
             justify="space-between"
+            wrap="wrap"
+            gap="sm"
             style={{ borderBottom: "1px solid var(--mantine-color-dark-5)" }}
           >
             <Group gap="sm">
-              <Title order={4} c="white">
+              <Title order={4} c="white" size="h5">
                 Records
               </Title>
               <Text size="sm" c="dimmed">
@@ -314,16 +329,21 @@ export default function Dashboard() {
           </Group>
 
           {enrichedRecords.length === 0 ? (
-            <Center py="xl">
-              <Text c="dimmed">No records yet. Add your first charge log.</Text>
+            <Center py="xl" px="md">
+              <Text c="dimmed" ta="center">
+                No records yet. Add your first charge log.
+              </Text>
             </Center>
           ) : (
-            <ScrollArea>
-              <Table
-                striped
-                highlightOnHover
-                withTableBorder={false}
-                styles={{
+            <>
+              <Box visibleFrom="sm">
+                <ScrollArea type="auto" offsetScrollbars>
+                  <Table
+                    striped
+                    highlightOnHover
+                    withTableBorder={false}
+                    miw={900}
+                    styles={{
                   th: {
                     backgroundColor: "var(--mantine-color-dark-7)",
                     color: "var(--mantine-color-gray-4)",
@@ -381,7 +401,35 @@ export default function Dashboard() {
                   ))}
                 </Table.Tbody>
               </Table>
-            </ScrollArea>
+                </ScrollArea>
+              </Box>
+
+              <Stack gap="sm" p="md" hiddenFrom="sm">
+                {displayedRecords.map((record) => (
+                  <DataMobileCard
+                    key={record.id}
+                    title={formatDate(record.created_at)}
+                    subtitle={`${record.odo} km ODO`}
+                    onEdit={() => handleEdit(record)}
+                    onDelete={() => handleDeleteClick(record)}
+                    fields={[
+                      {
+                        label: "Distance",
+                        value:
+                          record.distanceKm !== null
+                            ? `${formatNumber(record.distanceKm, 1)} km`
+                            : "—",
+                      },
+                      { label: "Battery", value: `${record.battery_before}% → ${record.battery_after}%` },
+                      { label: "kWh", value: formatNumber(record.charge_kwh, 2) },
+                      { label: "Time", value: formatChargeTime(record.charge_minutes) },
+                      { label: "kWh/km", value: formatNumber(record.kwhPerKm, 3) },
+                      { label: "Notes", value: record.notes || "—" },
+                    ]}
+                  />
+                ))}
+              </Stack>
+            </>
           )}
         </Stack>
       </Paper>
