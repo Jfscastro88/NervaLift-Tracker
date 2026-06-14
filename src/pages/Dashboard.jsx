@@ -12,6 +12,7 @@ import {
   Table,
   ScrollArea,
   Paper,
+  SegmentedControl,
 } from "@mantine/core";
 import {
   IconRoute,
@@ -60,6 +61,7 @@ function SummaryCard({ title, value, unit, icon: Icon, color }) {
 }
 
 export default function Dashboard() {
+  const [sortOrder, setSortOrder] = useState("new");
   const [enrichedRecords, setEnrichedRecords] = useState([]);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -84,13 +86,6 @@ export default function Dashboard() {
       const enriched = enrichRecords(data || []);
       const summaryResult = computeSummary(enriched);
 
-      console.log({
-        totalDistance: summaryResult.totalKm,
-        totalKwh: summaryResult.totalKwh,
-        avgKwhPerKm: summaryResult.avgKwhPerKm,
-        avgKmPerKwh: summaryResult.avgKmPerKwh,
-      });
-
       setEnrichedRecords(enriched);
       setSummary(summaryResult);
       setLoading(false);
@@ -98,6 +93,9 @@ export default function Dashboard() {
 
     fetchRecords();
   }, []);
+
+  const displayedRecords =
+    sortOrder === "new" ? [...enrichedRecords].reverse() : enrichedRecords;
 
   if (loading) {
     return (
@@ -171,13 +169,29 @@ export default function Dashboard() {
         style={{ border: "1px solid var(--mantine-color-dark-5)", overflow: "hidden" }}
       >
         <Stack gap={0}>
-          <Group px="lg" py="md" style={{ borderBottom: "1px solid var(--mantine-color-dark-5)" }}>
-            <Title order={4} c="white">
-              Records
-            </Title>
-            <Text size="sm" c="dimmed">
-              {enrichedRecords.length} entries
-            </Text>
+          <Group
+            px="lg"
+            py="md"
+            justify="space-between"
+            style={{ borderBottom: "1px solid var(--mantine-color-dark-5)" }}
+          >
+            <Group gap="sm">
+              <Title order={4} c="white">
+                Records
+              </Title>
+              <Text size="sm" c="dimmed">
+                {enrichedRecords.length} entries
+              </Text>
+            </Group>
+            <SegmentedControl
+              size="xs"
+              value={sortOrder}
+              onChange={setSortOrder}
+              data={[
+                { label: "New", value: "new" },
+                { label: "Old", value: "old" },
+              ]}
+            />
           </Group>
 
           {enrichedRecords.length === 0 ? (
@@ -218,7 +232,7 @@ export default function Dashboard() {
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
-                  {enrichedRecords.map((record) => (
+                  {displayedRecords.map((record) => (
                     <Table.Tr key={record.id}>
                       <Table.Td>{formatDate(record.created_at)}</Table.Td>
                       <Table.Td>{record.odo} km</Table.Td>
