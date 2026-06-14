@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Title,
   Text,
@@ -13,6 +14,7 @@ import {
   ScrollArea,
   Paper,
   SegmentedControl,
+  Button,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import {
@@ -25,6 +27,7 @@ import {
   IconShoppingCart,
   IconReceipt,
   IconCheck,
+  IconChartBar,
 } from "@tabler/icons-react";
 import { supabase } from "../lib/supabase";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
@@ -194,14 +197,25 @@ export default function Dashboard() {
 
   return (
     <Stack gap="xl">
-      <Stack gap={4}>
-        <Title order={2} c="white">
-          Dashboard
-        </Title>
-        <Text c="dimmed" size="sm">
-          Scooter charging and range overview
-        </Text>
-      </Stack>
+      <Group justify="space-between" align="flex-start" wrap="wrap" gap="md">
+        <Stack gap={4}>
+          <Title order={2} c="white">
+            Dashboard
+          </Title>
+          <Text c="dimmed" size="sm">
+            Scooter charging and range overview
+          </Text>
+        </Stack>
+        <Button
+          component={Link}
+          to="/analytics"
+          variant="light"
+          color="green"
+          leftSection={<IconChartBar size={16} />}
+        >
+          View Analytics
+        </Button>
+      </Group>
 
       {summary && (
         <SimpleGrid cols={{ base: 1, xs: 2, md: 3, lg: 4 }} spacing="md">

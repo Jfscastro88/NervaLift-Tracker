@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import AddRecord from './pages/AddRecord';
 import Maintenance from './pages/Maintenance';
 import Accessories from './pages/Accessories';
+import Analytics from './pages/Analytics';
 import AppLayout from './components/AppLayout';
 
 function ProtectedRoute({ session, children }) {
@@ -80,6 +81,14 @@ export default function App() {
           element={
             <ProtectedRoute session={session}>
               <Accessories />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/analytics"
+          element={
+            <ProtectedRoute session={session}>
+              <Analytics />
             </ProtectedRoute>
           }
         />

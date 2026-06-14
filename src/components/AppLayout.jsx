@@ -8,6 +8,7 @@ import {
   IconBolt,
   IconTool,
   IconShoppingCart,
+  IconChartBar,
 } from "@tabler/icons-react";
 import { supabase } from "../lib/supabase";
 
@@ -26,6 +27,7 @@ export default function AppLayout({ children }) {
     { label: "Add Record", to: "/add", icon: IconPlus },
     { label: "Maintenance", to: "/maintenance", icon: IconTool },
     { label: "Accessories", to: "/accessories", icon: IconShoppingCart },
+    { label: "Analytics", to: "/analytics", icon: IconChartBar },
     { label: "Logout", action: handleLogout, icon: IconLogout },
   ];
 
