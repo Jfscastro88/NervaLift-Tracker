@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Title,
   Text,
@@ -14,6 +14,7 @@ import {
   Paper,
   SegmentedControl,
 } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import {
   IconRoute,
   IconBatteryCharging,
@@ -23,8 +24,12 @@ import {
   IconTool,
   IconShoppingCart,
   IconReceipt,
+  IconCheck,
 } from "@tabler/icons-react";
 import { supabase } from "../lib/supabase";
+import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
+import EditScooterLogModal from "../components/EditScooterLogModal";
+import TableRowActions from "../components/TableRowActions";
 import {
   enrichRecords,
   computeSummary,
@@ -76,48 +81,97 @@ export default function Dashboard() {
   const [accessoriesStats, setAccessoriesStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedRecord, setSelectedRecord] = useState(null);
+  const [editModalOpened, setEditModalOpened] = useState(false);
+  const [deleteModalOpened, setDeleteModalOpened] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    async function fetchRecords() {
-      setLoading(true);
-      setError(null);
+  const fetchRecords = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) setLoading(true);
+    setError(null);
 
-      const [logsResult, maintenanceResult, accessoriesResult] = await Promise.all([
-        supabase.from("scooter_logs").select("*").order("odo", { ascending: true }),
-        supabase.from("maintenance").select("date, odo, cost"),
-        supabase.from("accessories").select("purchase_date, cost, installed"),
-      ]);
+    const [logsResult, maintenanceResult, accessoriesResult] = await Promise.all([
+      supabase.from("scooter_logs").select("*").order("odo", { ascending: true }),
+      supabase.from("maintenance").select("date, odo, cost"),
+      supabase.from("accessories").select("purchase_date, cost, installed"),
+    ]);
 
-      if (logsResult.error) {
-        setError(logsResult.error.message);
-        setLoading(false);
-        return;
-      }
-
-      if (maintenanceResult.error) {
-        setError(maintenanceResult.error.message);
-        setLoading(false);
-        return;
-      }
-
-      if (accessoriesResult.error) {
-        setError(accessoriesResult.error.message);
-        setLoading(false);
-        return;
-      }
-
-      const enriched = enrichRecords(logsResult.data || []);
-      const summaryResult = computeSummary(enriched);
-
-      setEnrichedRecords(enriched);
-      setSummary(summaryResult);
-      setMaintenanceStats(calculateMaintenanceStats(maintenanceResult.data || []));
-      setAccessoriesStats(calculateAccessoriesStats(accessoriesResult.data || []));
-      setLoading(false);
+    if (logsResult.error) {
+      setError(logsResult.error.message);
+      if (!silent) setLoading(false);
+      return;
     }
 
-    fetchRecords();
+    if (maintenanceResult.error) {
+      setError(maintenanceResult.error.message);
+      if (!silent) setLoading(false);
+      return;
+    }
+
+    if (accessoriesResult.error) {
+      setError(accessoriesResult.error.message);
+      if (!silent) setLoading(false);
+      return;
+    }
+
+    const enriched = enrichRecords(logsResult.data || []);
+    const summaryResult = computeSummary(enriched);
+
+    setEnrichedRecords(enriched);
+    setSummary(summaryResult);
+    setMaintenanceStats(calculateMaintenanceStats(maintenanceResult.data || []));
+    setAccessoriesStats(calculateAccessoriesStats(accessoriesResult.data || []));
+    if (!silent) setLoading(false);
   }, []);
+
+  useEffect(() => {
+    fetchRecords();
+  }, [fetchRecords]);
+
+  function handleEdit(record) {
+    setSelectedRecord(record);
+    setEditModalOpened(true);
+  }
+
+  function handleDeleteClick(record) {
+    setSelectedRecord(record);
+    setDeleteModalOpened(true);
+  }
+
+  async function handleDeleteConfirm() {
+    if (!selectedRecord) return;
+
+    setDeleting(true);
+
+    const { error: deleteError } = await supabase
+      .from("scooter_logs")
+      .delete()
+      .eq("id", selectedRecord.id);
+
+    setDeleting(false);
+
+    if (deleteError) {
+      console.error("Error deleting scooter log:", deleteError);
+      notifications.show({
+        title: "Error",
+        message: deleteError.message,
+        color: "red",
+        icon: <IconAlertCircle size={18} />,
+      });
+      return;
+    }
+
+    notifications.show({
+      title: "Record deleted",
+      message: "The charging record has been deleted successfully.",
+      color: "green",
+      icon: <IconCheck size={18} />,
+    });
+
+    setDeleteModalOpened(false);
+    setSelectedRecord(null);
+    fetchRecords({ silent: true });
+  }
 
   const displayedRecords =
     sortOrder === "new" ? [...enrichedRecords].reverse() : enrichedRecords;
@@ -280,6 +334,7 @@ export default function Dashboard() {
                     <Table.Th>Time</Table.Th>
                     <Table.Th>kWh/km</Table.Th>
                     <Table.Th>Notes</Table.Th>
+                    <Table.Th w={90}>Actions</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
@@ -302,6 +357,12 @@ export default function Dashboard() {
                           {record.notes || "—"}
                         </Text>
                       </Table.Td>
+                      <Table.Td>
+                        <TableRowActions
+                          onEdit={() => handleEdit(record)}
+                          onDelete={() => handleDeleteClick(record)}
+                        />
+                      </Table.Td>
                     </Table.Tr>
                   ))}
                 </Table.Tbody>
@@ -310,6 +371,28 @@ export default function Dashboard() {
           )}
         </Stack>
       </Paper>
+
+      <EditScooterLogModal
+        opened={editModalOpened}
+        onClose={() => {
+          setEditModalOpened(false);
+          setSelectedRecord(null);
+        }}
+        record={selectedRecord}
+        onSuccess={() => fetchRecords({ silent: true })}
+      />
+
+      <ConfirmDeleteModal
+        opened={deleteModalOpened}
+        onClose={() => {
+          setDeleteModalOpened(false);
+          setSelectedRecord(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Record"
+        message="Are you sure you want to delete this charging record? This action cannot be undone."
+        loading={deleting}
+      />
     </Stack>
   );
 }

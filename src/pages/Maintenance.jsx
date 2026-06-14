@@ -29,6 +29,9 @@ import {
   IconCalendar,
 } from '@tabler/icons-react';
 import { supabase } from '../lib/supabase';
+import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
+import EditMaintenanceModal from '../components/EditMaintenanceModal';
+import TableRowActions from '../components/TableRowActions';
 import {
   calculateMaintenanceStats,
   formatCurrency,
@@ -79,6 +82,10 @@ export default function Maintenance() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedRecord, setSelectedRecord] = useState(null);
+  const [editModalOpened, setEditModalOpened] = useState(false);
+  const [deleteModalOpened, setDeleteModalOpened] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const form = useForm({
     initialValues: {
@@ -106,8 +113,8 @@ export default function Maintenance() {
     },
   });
 
-  const fetchRecords = useCallback(async () => {
-    setLoading(true);
+  const fetchRecords = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) setLoading(true);
     setError(null);
 
     const { data, error: fetchError } = await supabase
@@ -117,15 +124,60 @@ export default function Maintenance() {
 
     if (fetchError) {
       setError(fetchError.message);
-      setLoading(false);
+      if (!silent) setLoading(false);
       return;
     }
 
     const fetchedRecords = data || [];
     setRecords(fetchedRecords);
     setStats(calculateMaintenanceStats(fetchedRecords));
-    setLoading(false);
+    if (!silent) setLoading(false);
   }, []);
+
+  function handleEdit(record) {
+    setSelectedRecord(record);
+    setEditModalOpened(true);
+  }
+
+  function handleDeleteClick(record) {
+    setSelectedRecord(record);
+    setDeleteModalOpened(true);
+  }
+
+  async function handleDeleteConfirm() {
+    if (!selectedRecord) return;
+
+    setDeleting(true);
+
+    const { error: deleteError } = await supabase
+      .from('maintenance')
+      .delete()
+      .eq('id', selectedRecord.id);
+
+    setDeleting(false);
+
+    if (deleteError) {
+      console.error('Error deleting maintenance record:', deleteError);
+      notifications.show({
+        title: 'Error',
+        message: deleteError.message,
+        color: 'red',
+        icon: <IconAlertCircle size={18} />,
+      });
+      return;
+    }
+
+    notifications.show({
+      title: 'Maintenance deleted',
+      message: 'The maintenance record has been deleted successfully.',
+      color: 'green',
+      icon: <IconCheck size={18} />,
+    });
+
+    setDeleteModalOpened(false);
+    setSelectedRecord(null);
+    fetchRecords({ silent: true });
+  }
 
   useEffect(() => {
     fetchRecords();
@@ -344,6 +396,7 @@ export default function Maintenance() {
                     <Table.Th>Type</Table.Th>
                     <Table.Th>Cost</Table.Th>
                     <Table.Th>Notes</Table.Th>
+                    <Table.Th w={90}>Actions</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
@@ -362,6 +415,12 @@ export default function Maintenance() {
                           {record.notes || '—'}
                         </Text>
                       </Table.Td>
+                      <Table.Td>
+                        <TableRowActions
+                          onEdit={() => handleEdit(record)}
+                          onDelete={() => handleDeleteClick(record)}
+                        />
+                      </Table.Td>
                     </Table.Tr>
                   ))}
                 </Table.Tbody>
@@ -370,6 +429,28 @@ export default function Maintenance() {
           )}
         </Stack>
       </Paper>
+
+      <EditMaintenanceModal
+        opened={editModalOpened}
+        onClose={() => {
+          setEditModalOpened(false);
+          setSelectedRecord(null);
+        }}
+        record={selectedRecord}
+        onSuccess={() => fetchRecords({ silent: true })}
+      />
+
+      <ConfirmDeleteModal
+        opened={deleteModalOpened}
+        onClose={() => {
+          setDeleteModalOpened(false);
+          setSelectedRecord(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Maintenance"
+        message="Are you sure you want to delete this maintenance record? This action cannot be undone."
+        loading={deleting}
+      />
     </Stack>
   );
 }
