@@ -55,10 +55,10 @@ export default function Login() {
             <Stack gap="xs" align="center">
               <IconBolt size={40} color="var(--mantine-color-green-5)" />
               <Title order={2} c="white">
-                NervaLift
+                Nerva Lift
               </Title>
               <Text c="dimmed" size="sm">
-                Scooter FT53666
+                Scooter licence plate: FT53666
               </Text>
             </Stack>
 

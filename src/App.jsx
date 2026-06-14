@@ -5,6 +5,8 @@ import { supabase } from './lib/supabase';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AddRecord from './pages/AddRecord';
+import Maintenance from './pages/Maintenance';
+import Accessories from './pages/Accessories';
 import AppLayout from './components/AppLayout';
 
 function ProtectedRoute({ session, children }) {
@@ -62,6 +64,22 @@ export default function App() {
           element={
             <ProtectedRoute session={session}>
               <AddRecord />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance"
+          element={
+            <ProtectedRoute session={session}>
+              <Maintenance />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accessories"
+          element={
+            <ProtectedRoute session={session}>
+              <Accessories />
             </ProtectedRoute>
           }
         />

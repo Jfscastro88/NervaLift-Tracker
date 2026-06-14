@@ -124,7 +124,7 @@ export default function AddRecord() {
   }
 
   return (
-    <Stack gap="xl" maw={600}>
+    <Stack gap="xl" maw={600} mx="auto" w="100%">
       <Stack gap={4}>
         <Title order={2} c="white">
           Add Record

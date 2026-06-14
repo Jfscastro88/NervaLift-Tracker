@@ -20,6 +20,9 @@ import {
   IconGauge,
   IconClock,
   IconAlertCircle,
+  IconTool,
+  IconShoppingCart,
+  IconReceipt,
 } from "@tabler/icons-react";
 import { supabase } from "../lib/supabase";
 import {
@@ -29,6 +32,11 @@ import {
   formatDate,
   formatChargeTime,
 } from "../lib/calculations";
+import {
+  calculateMaintenanceStats,
+  calculateAccessoriesStats,
+  formatCurrency,
+} from "../lib/expenseCalculations";
 
 function SummaryCard({ title, value, unit, icon: Icon, color }) {
   return (
@@ -64,6 +72,8 @@ export default function Dashboard() {
   const [sortOrder, setSortOrder] = useState("new");
   const [enrichedRecords, setEnrichedRecords] = useState([]);
   const [summary, setSummary] = useState(null);
+  const [maintenanceStats, setMaintenanceStats] = useState(null);
+  const [accessoriesStats, setAccessoriesStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -72,22 +82,37 @@ export default function Dashboard() {
       setLoading(true);
       setError(null);
 
-      const { data, error: fetchError } = await supabase
-        .from("scooter_logs")
-        .select("*")
-        .order("odo", { ascending: true });
+      const [logsResult, maintenanceResult, accessoriesResult] = await Promise.all([
+        supabase.from("scooter_logs").select("*").order("odo", { ascending: true }),
+        supabase.from("maintenance").select("date, odo, cost"),
+        supabase.from("accessories").select("purchase_date, cost, installed"),
+      ]);
 
-      if (fetchError) {
-        setError(fetchError.message);
+      if (logsResult.error) {
+        setError(logsResult.error.message);
         setLoading(false);
         return;
       }
 
-      const enriched = enrichRecords(data || []);
+      if (maintenanceResult.error) {
+        setError(maintenanceResult.error.message);
+        setLoading(false);
+        return;
+      }
+
+      if (accessoriesResult.error) {
+        setError(accessoriesResult.error.message);
+        setLoading(false);
+        return;
+      }
+
+      const enriched = enrichRecords(logsResult.data || []);
       const summaryResult = computeSummary(enriched);
 
       setEnrichedRecords(enriched);
       setSummary(summaryResult);
+      setMaintenanceStats(calculateMaintenanceStats(maintenanceResult.data || []));
+      setAccessoriesStats(calculateAccessoriesStats(accessoriesResult.data || []));
       setLoading(false);
     }
 
@@ -125,7 +150,7 @@ export default function Dashboard() {
       </Stack>
 
       {summary && (
-        <SimpleGrid cols={{ base: 1, xs: 2, md: 3, lg: 5 }} spacing="md">
+        <SimpleGrid cols={{ base: 1, xs: 2, md: 3, lg: 4 }} spacing="md">
           <SummaryCard
             title="Total KM"
             value={formatNumber(summary.totalKm, 1)}
@@ -160,6 +185,32 @@ export default function Dashboard() {
             icon={IconClock}
             color="violet"
           />
+          {maintenanceStats && (
+            <SummaryCard
+              title="Maintenance Cost"
+              value={formatCurrency(maintenanceStats.totalCost)}
+              icon={IconTool}
+              color="orange"
+            />
+          )}
+          {accessoriesStats && (
+            <SummaryCard
+              title="Accessories Cost"
+              value={formatCurrency(accessoriesStats.totalCost)}
+              icon={IconShoppingCart}
+              color="pink"
+            />
+          )}
+          {maintenanceStats && accessoriesStats && (
+            <SummaryCard
+              title="Total Extra Cost"
+              value={formatCurrency(
+                maintenanceStats.totalCost + accessoriesStats.totalCost,
+              )}
+              icon={IconReceipt}
+              color="red"
+            />
+          )}
         </SimpleGrid>
       )}
 
