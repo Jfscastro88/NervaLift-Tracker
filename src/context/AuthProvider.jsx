@@ -15,7 +15,8 @@ export function AuthProvider({ session, children }) {
 
     getCurrentUserRole().then((fetchedRole) => {
       if (!cancelled) {
-        setRole(fetchedRole ?? 'guest');
+        console.log('[auth] resolved role:', fetchedRole, 'isGuest:', fetchedRole === 'guest');
+        setRole(fetchedRole);
         setRoleLoading(false);
       }
     });

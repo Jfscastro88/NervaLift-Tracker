@@ -28,15 +28,28 @@ export async function getCurrentUserRole() {
     error: userError,
   } = await supabase.auth.getUser();
 
-  if (userError || !user) return null;
+  if (userError || !user) {
+    console.log('[auth] no user session', userError?.message ?? '');
+    return null;
+  }
 
   const { data, error } = await supabase
     .from('profiles')
     .select('role')
     .eq('id', user.id)
-    .single();
+    .maybeSingle();
 
-  if (error || !data) return 'guest';
+  console.log('[auth] user:', user.email, 'role:', data?.role ?? null, error ? `(fetch error: ${error.message})` : '');
+
+  if (error) {
+    console.warn('[auth] profile fetch failed:', error.message);
+    return null;
+  }
+
+  if (!data?.role) {
+    console.warn('[auth] profile missing or role empty for', user.email);
+    return null;
+  }
 
   return data.role;
 }

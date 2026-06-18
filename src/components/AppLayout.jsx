@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { AppShell, Group, Text, Button, Burger, NavLink, Stack, Box } from "@mantine/core";
+import { AppShell, Group, Text, Button, Burger, NavLink, Stack, Box, Modal } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import {
   IconDashboard,
@@ -9,9 +10,11 @@ import {
   IconTool,
   IconShoppingCart,
   IconChartBar,
+  IconX,
 } from "@tabler/icons-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../hooks/useAuth";
+import { useIsMobile } from "../hooks/useIsMobile";
 import GuestModeAlert from "./GuestModeAlert";
 
 const navLinkStyles = {
@@ -24,13 +27,24 @@ const navLinkStyles = {
 
 export default function AppLayout({ children }) {
   const [opened, { toggle, close }] = useDisclosure();
+  const [logoutOpened, { open: openLogoutModal, close: closeLogoutModal }] = useDisclosure();
+  const [loggingOut, setLoggingOut] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { isGuest } = useAuth();
+  const isMobile = useIsMobile();
 
-  async function handleLogout() {
+  async function handleLogoutConfirm() {
+    setLoggingOut(true);
     await supabase.auth.signOut();
+    setLoggingOut(false);
+    closeLogoutModal();
     navigate("/login");
+  }
+
+  function handleLogoutClick() {
+    close();
+    openLogoutModal();
   }
 
   function handleNavClick(callback) {
@@ -44,7 +58,7 @@ export default function AppLayout({ children }) {
     { label: "Maintenance", to: "/maintenance", icon: IconTool },
     { label: "Accessories", to: "/accessories", icon: IconShoppingCart },
     { label: "Analytics", to: "/analytics", icon: IconChartBar },
-    { label: "Logout", action: handleLogout, icon: IconLogout },
+    { label: "Logout", action: handleLogoutClick, icon: IconLogout },
   ];
 
   return (
@@ -74,7 +88,7 @@ export default function AppLayout({ children }) {
             <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
               <IconBolt size={22} color="var(--mantine-color-green-5)" />
               <Text fw={700} size="lg" c="white" visibleFrom="xs" truncate>
-                NervaLift - FT53666
+                NervaLift
               </Text>
               <Text fw={700} size="md" c="white" hiddenFrom="xs" truncate>
                 NervaLift
@@ -87,7 +101,7 @@ export default function AppLayout({ children }) {
               variant="subtle"
               color="gray"
               leftSection={<IconLogout size={16} />}
-              onClick={handleLogout}
+              onClick={openLogoutModal}
               visibleFrom="sm"
             >
               Logout
@@ -145,6 +159,66 @@ export default function AppLayout({ children }) {
           {children}
         </Box>
       </AppShell.Main>
+
+      <Modal
+        opened={logoutOpened}
+        onClose={closeLogoutModal}
+        title="Log out"
+        centered
+        fullScreen={isMobile}
+        size={isMobile ? undefined : "sm"}
+        padding={isMobile ? "md" : "lg"}
+        overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
+      >
+        <Text size="sm" c="dimmed" lh={1.6}>
+          Are you sure you want to sign out?
+        </Text>
+        {isMobile ? (
+          <Stack gap="sm" mt="xl">
+            <Button
+              color="red"
+              onClick={handleLogoutConfirm}
+              loading={loggingOut}
+              fullWidth
+              size="md"
+              leftSection={<IconLogout size={16} />}
+            >
+              Log out
+            </Button>
+            <Button
+              variant="subtle"
+              color="gray"
+              onClick={closeLogoutModal}
+              disabled={loggingOut}
+              fullWidth
+              size="md"
+              leftSection={<IconX size={16} />}
+            >
+              Cancel
+            </Button>
+          </Stack>
+        ) : (
+          <Group justify="flex-end" mt="lg">
+            <Button
+              variant="subtle"
+              color="gray"
+              onClick={closeLogoutModal}
+              disabled={loggingOut}
+              leftSection={<IconX size={16} />}
+            >
+              Cancel
+            </Button>
+            <Button
+              color="red"
+              onClick={handleLogoutConfirm}
+              loading={loggingOut}
+              leftSection={<IconLogout size={16} />}
+            >
+              Log out
+            </Button>
+          </Group>
+        )}
+      </Modal>
     </AppShell>
   );
 }

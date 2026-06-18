@@ -267,8 +267,7 @@ export default function Login() {
                 </form>
 
                 <Alert color="blue" variant="light" title="Demo access">
-                  <Text size="sm">quest@quest.com</Text>
-                  <Text size="sm">password: quest@</Text>
+                  <Text size="sm">guest@guest.com</Text>
                 </Alert>
               </Stack>
             </Paper>
