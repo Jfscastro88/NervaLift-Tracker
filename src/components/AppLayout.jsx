@@ -11,6 +11,8 @@ import {
   IconChartBar,
 } from "@tabler/icons-react";
 import { supabase } from "../lib/supabase";
+import { useAuth } from "../hooks/useAuth";
+import GuestModeAlert from "./GuestModeAlert";
 
 const navLinkStyles = {
   root: {
@@ -24,6 +26,7 @@ export default function AppLayout({ children }) {
   const [opened, { toggle, close }] = useDisclosure();
   const navigate = useNavigate();
   const location = useLocation();
+  const { isGuest } = useAuth();
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -37,7 +40,7 @@ export default function AppLayout({ children }) {
 
   const navItems = [
     { label: "Dashboard", to: "/", icon: IconDashboard },
-    { label: "Add Record", to: "/add", icon: IconPlus },
+    ...(!isGuest ? [{ label: "Add Record", to: "/add", icon: IconPlus }] : []),
     { label: "Maintenance", to: "/maintenance", icon: IconTool },
     { label: "Accessories", to: "/accessories", icon: IconShoppingCart },
     { label: "Analytics", to: "/analytics", icon: IconChartBar },
@@ -78,15 +81,18 @@ export default function AppLayout({ children }) {
               </Text>
             </Group>
           </Group>
-          <Button
-            variant="subtle"
-            color="gray"
-            leftSection={<IconLogout size={16} />}
-            onClick={handleLogout}
-            visibleFrom="sm"
-          >
-            Logout
-          </Button>
+          <Group gap="sm" wrap="nowrap">
+            {isGuest && <GuestModeAlert variant="badge" />}
+            <Button
+              variant="subtle"
+              color="gray"
+              leftSection={<IconLogout size={16} />}
+              onClick={handleLogout}
+              visibleFrom="sm"
+            >
+              Logout
+            </Button>
+          </Group>
         </Group>
       </AppShell.Header>
 

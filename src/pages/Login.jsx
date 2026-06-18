@@ -67,7 +67,12 @@ export default function Login() {
 
   return (
     <Box mih="100vh" bg="#0a0a0a" style={{ display: "flex", flexDirection: "column" }}>
-      <Container size="lg" py={{ base: "lg", sm: "xl", md: 60 }} px={{ base: "md", sm: "lg" }} style={{ flex: 1 }}>
+      <Container
+        size="lg"
+        py={{ base: "lg", sm: "xl", md: 60 }}
+        px={{ base: "md", sm: "lg" }}
+        style={{ flex: 1 }}
+      >
         <Grid gutter={{ base: "xl", md: 48 }} align="stretch">
           <Grid.Col span={{ base: 12, md: 6 }} order={{ base: 1, md: 1 }}>
             <Stack gap={{ base: "lg", sm: "xl" }}>
@@ -260,6 +265,11 @@ export default function Login() {
                     </Button>
                   </Stack>
                 </form>
+
+                <Alert color="blue" variant="light" title="Demo access">
+                  <Text size="sm">quest@quest.com</Text>
+                  <Text size="sm">password: quest@</Text>
+                </Alert>
               </Stack>
             </Paper>
           </Grid.Col>

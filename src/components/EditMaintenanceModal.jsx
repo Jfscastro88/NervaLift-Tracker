@@ -11,6 +11,7 @@ import {
 import { notifications } from '@mantine/notifications';
 import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
 import { supabase } from '../lib/supabase';
+import { getErrorMessage } from '../lib/profile';
 import { useIsMobile } from '../hooks/useIsMobile';
 import ModalFormActions from './ModalFormActions';
 
@@ -87,7 +88,7 @@ export default function EditMaintenanceModal({ opened, onClose, record, onSucces
       console.error('Error updating maintenance record:', error);
       notifications.show({
         title: 'Error',
-        message: error.message,
+        message: getErrorMessage(error),
         color: 'red',
         icon: <IconAlertCircle size={18} />,
       });

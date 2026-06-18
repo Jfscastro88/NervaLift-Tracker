@@ -14,6 +14,7 @@ import {
 import { notifications } from '@mantine/notifications';
 import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
 import { supabase } from '../lib/supabase';
+import { getErrorMessage } from '../lib/profile';
 import PageHeader from '../components/PageHeader';
 
 export default function AddRecord() {
@@ -109,7 +110,7 @@ export default function AddRecord() {
     setSubmitting(false);
 
     if (insertError) {
-      setError(insertError.message);
+      setError(getErrorMessage(insertError));
       return;
     }
 

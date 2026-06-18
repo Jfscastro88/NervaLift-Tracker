@@ -31,6 +31,8 @@ import {
   IconChartBar,
 } from "@tabler/icons-react";
 import { supabase } from "../lib/supabase";
+import { getErrorMessage } from "../lib/profile";
+import { useAuth } from "../hooks/useAuth";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import EditScooterLogModal from "../components/EditScooterLogModal";
 import TableRowActions from "../components/TableRowActions";
@@ -80,6 +82,7 @@ function SummaryCard({ title, value, unit, icon: Icon, color }) {
 }
 
 export default function Dashboard() {
+  const { isReadOnly } = useAuth();
   const [sortOrder, setSortOrder] = useState("new");
   const [enrichedRecords, setEnrichedRecords] = useState([]);
   const [summary, setSummary] = useState(null);
@@ -160,7 +163,7 @@ export default function Dashboard() {
       console.error("Error deleting scooter log:", deleteError);
       notifications.show({
         title: "Error",
-        message: deleteError.message,
+        message: getErrorMessage(deleteError),
         color: "red",
         icon: <IconAlertCircle size={18} />,
       });
@@ -368,7 +371,7 @@ export default function Dashboard() {
                     <Table.Th>Time</Table.Th>
                     <Table.Th>kWh/km</Table.Th>
                     <Table.Th>Notes</Table.Th>
-                    <Table.Th w={90}>Actions</Table.Th>
+                    {!isReadOnly && <Table.Th w={90}>Actions</Table.Th>}
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
@@ -391,12 +394,14 @@ export default function Dashboard() {
                           {record.notes || "—"}
                         </Text>
                       </Table.Td>
-                      <Table.Td>
-                        <TableRowActions
-                          onEdit={() => handleEdit(record)}
-                          onDelete={() => handleDeleteClick(record)}
-                        />
-                      </Table.Td>
+                      {!isReadOnly && (
+                        <Table.Td>
+                          <TableRowActions
+                            onEdit={() => handleEdit(record)}
+                            onDelete={() => handleDeleteClick(record)}
+                          />
+                        </Table.Td>
+                      )}
                     </Table.Tr>
                   ))}
                 </Table.Tbody>
@@ -410,8 +415,8 @@ export default function Dashboard() {
                     key={record.id}
                     title={formatDate(record.created_at)}
                     subtitle={`${record.odo} km ODO`}
-                    onEdit={() => handleEdit(record)}
-                    onDelete={() => handleDeleteClick(record)}
+                    onEdit={isReadOnly ? undefined : () => handleEdit(record)}
+                    onDelete={isReadOnly ? undefined : () => handleDeleteClick(record)}
                     fields={[
                       {
                         label: "Distance",
@@ -434,27 +439,31 @@ export default function Dashboard() {
         </Stack>
       </Paper>
 
-      <EditScooterLogModal
-        opened={editModalOpened}
-        onClose={() => {
-          setEditModalOpened(false);
-          setSelectedRecord(null);
-        }}
-        record={selectedRecord}
-        onSuccess={() => fetchRecords({ silent: true })}
-      />
+      {!isReadOnly && (
+        <>
+          <EditScooterLogModal
+            opened={editModalOpened}
+            onClose={() => {
+              setEditModalOpened(false);
+              setSelectedRecord(null);
+            }}
+            record={selectedRecord}
+            onSuccess={() => fetchRecords({ silent: true })}
+          />
 
-      <ConfirmDeleteModal
-        opened={deleteModalOpened}
-        onClose={() => {
-          setDeleteModalOpened(false);
-          setSelectedRecord(null);
-        }}
-        onConfirm={handleDeleteConfirm}
-        title="Delete Record"
-        message="Are you sure you want to delete this charging record? This action cannot be undone."
-        loading={deleting}
-      />
+          <ConfirmDeleteModal
+            opened={deleteModalOpened}
+            onClose={() => {
+              setDeleteModalOpened(false);
+              setSelectedRecord(null);
+            }}
+            onConfirm={handleDeleteConfirm}
+            title="Delete Record"
+            message="Are you sure you want to delete this charging record? This action cannot be undone."
+            loading={deleting}
+          />
+        </>
+      )}
     </Stack>
   );
 }

@@ -2,6 +2,8 @@ import { Paper, Stack, Text, Group, SimpleGrid } from '@mantine/core';
 import TableRowActions from './TableRowActions';
 
 export default function DataMobileCard({ title, subtitle, fields, onEdit, onDelete }) {
+  const hasActions = onEdit || onDelete;
+
   return (
     <Paper
       p="md"
@@ -20,7 +22,7 @@ export default function DataMobileCard({ title, subtitle, fields, onEdit, onDele
             </Text>
           )}
         </Stack>
-        <TableRowActions onEdit={onEdit} onDelete={onDelete} />
+        {hasActions && <TableRowActions onEdit={onEdit} onDelete={onDelete} />}
       </Group>
       <SimpleGrid cols={2} spacing="sm">
         {fields.map((field) => (

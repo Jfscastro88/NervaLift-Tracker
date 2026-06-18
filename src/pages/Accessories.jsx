@@ -31,11 +31,14 @@ import {
   IconCircleX,
 } from '@tabler/icons-react';
 import { supabase } from '../lib/supabase';
+import { getErrorMessage } from '../lib/profile';
+import { useAuth } from '../hooks/useAuth';
 import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
 import EditAccessoryModal from '../components/EditAccessoryModal';
 import TableRowActions from '../components/TableRowActions';
 import DataMobileCard from '../components/DataMobileCard';
 import PageHeader from '../components/PageHeader';
+import GuestModeAlert from '../components/GuestModeAlert';
 import {
   calculateAccessoriesStats,
   formatCurrency,
@@ -81,6 +84,7 @@ function SummaryCard({ title, value, unit, icon: Icon, color }) {
 }
 
 export default function Accessories() {
+  const { isReadOnly } = useAuth();
   const [records, setRecords] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -160,7 +164,7 @@ export default function Accessories() {
       console.error('Error deleting accessory:', deleteError);
       notifications.show({
         title: 'Error',
-        message: deleteError.message,
+        message: getErrorMessage(deleteError),
         color: 'red',
         icon: <IconAlertCircle size={18} />,
       });
@@ -213,7 +217,7 @@ export default function Accessories() {
     if (insertError) {
       notifications.show({
         title: 'Error',
-        message: insertError.message,
+        message: getErrorMessage(insertError),
         color: 'red',
         icon: <IconAlertCircle size={18} />,
       });
@@ -248,6 +252,8 @@ export default function Accessories() {
         subtitle="Track add-ons, upgrades, and gear purchases"
       />
 
+      {isReadOnly && <GuestModeAlert />}
+
       {stats && (
         <SimpleGrid cols={{ base: 1, xs: 2, md: 4 }} spacing="md">
           <SummaryCard
@@ -277,75 +283,77 @@ export default function Accessories() {
         </SimpleGrid>
       )}
 
-      <Paper
-        p={{ base: 'md', sm: 'xl' }}
-        radius="md"
-        bg="dark.8"
-        style={{ border: '1px solid var(--mantine-color-dark-5)' }}
-        w="100%"
-      >
-        {error && (
-          <Alert
-            icon={<IconAlertCircle size={16} />}
-            color="red"
-            mb="md"
-            variant="light"
-          >
-            {error}
-          </Alert>
-        )}
+      {!isReadOnly && (
+        <Paper
+          p={{ base: 'md', sm: 'xl' }}
+          radius="md"
+          bg="dark.8"
+          style={{ border: '1px solid var(--mantine-color-dark-5)' }}
+          w="100%"
+        >
+          {error && (
+            <Alert
+              icon={<IconAlertCircle size={16} />}
+              color="red"
+              mb="md"
+              variant="light"
+            >
+              {error}
+            </Alert>
+          )}
 
-        <form onSubmit={form.onSubmit(handleSubmit)}>
-          <Stack gap="md">
-            <TextInput
-              label="Purchase date"
-              type="date"
-              required
-              size="md"
-              {...form.getInputProps('purchase_date')}
-            />
-            <TextInput
-              label="Name"
-              placeholder="e.g. Top case 35L"
-              required
-              size="md"
-              {...form.getInputProps('name')}
-            />
-            <Select
-              label="Category"
-              placeholder="Select category"
-              data={ACCESSORY_CATEGORIES}
-              required
-              searchable
-              size="md"
-              {...form.getInputProps('category')}
-            />
-            <NumberInput
-              label="Cost (€)"
-              placeholder="e.g. 89.99"
-              min={0}
-              decimalScale={2}
-              required
-              size="md"
-              {...form.getInputProps('cost')}
-            />
-            <Checkbox
-              label="Installed"
-              size="md"
-              {...form.getInputProps('installed', { type: 'checkbox' })}
-            />
-            <Textarea
-              label="Notes"
-              placeholder="Optional notes..."
-              minRows={3}
-              {...form.getInputProps('notes')}
-            />
-            <Button type="submit" color="green" loading={submitting} fullWidth size="md">
-              Save Accessory
-            </Button>
-          </Stack>
-        </form>
-      </Paper>
+          <form onSubmit={form.onSubmit(handleSubmit)}>
+            <Stack gap="md">
+              <TextInput
+                label="Purchase date"
+                type="date"
+                required
+                size="md"
+                {...form.getInputProps('purchase_date')}
+              />
+              <TextInput
+                label="Name"
+                placeholder="e.g. Top case 35L"
+                required
+                size="md"
+                {...form.getInputProps('name')}
+              />
+              <Select
+                label="Category"
+                placeholder="Select category"
+                data={ACCESSORY_CATEGORIES}
+                required
+                searchable
+                size="md"
+                {...form.getInputProps('category')}
+              />
+              <NumberInput
+                label="Cost (€)"
+                placeholder="e.g. 89.99"
+                min={0}
+                decimalScale={2}
+                required
+                size="md"
+                {...form.getInputProps('cost')}
+              />
+              <Checkbox
+                label="Installed"
+                size="md"
+                {...form.getInputProps('installed', { type: 'checkbox' })}
+              />
+              <Textarea
+                label="Notes"
+                placeholder="Optional notes..."
+                minRows={3}
+                {...form.getInputProps('notes')}
+              />
+              <Button type="submit" color="green" loading={submitting} fullWidth size="md">
+                Save Accessory
+              </Button>
+            </Stack>
+          </form>
+        </Paper>
+      )}
 
       <Paper
         radius="md"
@@ -403,7 +411,7 @@ export default function Accessories() {
                     <Table.Th>Cost</Table.Th>
                     <Table.Th>Installed</Table.Th>
                     <Table.Th>Notes</Table.Th>
-                    <Table.Th w={90}>Actions</Table.Th>
+                    {!isReadOnly && <Table.Th w={90}>Actions</Table.Th>}
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
@@ -419,12 +427,14 @@ export default function Accessories() {
                           {record.notes || '—'}
                         </Text>
                       </Table.Td>
-                      <Table.Td>
-                        <TableRowActions
-                          onEdit={() => handleEdit(record)}
-                          onDelete={() => handleDeleteClick(record)}
-                        />
-                      </Table.Td>
+                      {!isReadOnly && (
+                        <Table.Td>
+                          <TableRowActions
+                            onEdit={() => handleEdit(record)}
+                            onDelete={() => handleDeleteClick(record)}
+                          />
+                        </Table.Td>
+                      )}
                     </Table.Tr>
                   ))}
                 </Table.Tbody>
@@ -438,8 +448,8 @@ export default function Accessories() {
                     key={record.id}
                     title={record.name}
                     subtitle={formatDate(record.purchase_date)}
-                    onEdit={() => handleEdit(record)}
-                    onDelete={() => handleDeleteClick(record)}
+                    onEdit={isReadOnly ? undefined : () => handleEdit(record)}
+                    onDelete={isReadOnly ? undefined : () => handleDeleteClick(record)}
                     fields={[
                       { label: 'Category', value: record.category },
                       { label: 'Cost', value: formatCurrency(Number(record.cost)) },
@@ -454,27 +464,31 @@ export default function Accessories() {
         </Stack>
       </Paper>
 
-      <EditAccessoryModal
-        opened={editModalOpened}
-        onClose={() => {
-          setEditModalOpened(false);
-          setSelectedRecord(null);
-        }}
-        record={selectedRecord}
-        onSuccess={() => fetchRecords({ silent: true })}
-      />
+      {!isReadOnly && (
+        <>
+          <EditAccessoryModal
+            opened={editModalOpened}
+            onClose={() => {
+              setEditModalOpened(false);
+              setSelectedRecord(null);
+            }}
+            record={selectedRecord}
+            onSuccess={() => fetchRecords({ silent: true })}
+          />
 
-      <ConfirmDeleteModal
-        opened={deleteModalOpened}
-        onClose={() => {
-          setDeleteModalOpened(false);
-          setSelectedRecord(null);
-        }}
-        onConfirm={handleDeleteConfirm}
-        title="Delete Accessory"
-        message="Are you sure you want to delete this accessory? This action cannot be undone."
-        loading={deleting}
-      />
+          <ConfirmDeleteModal
+            opened={deleteModalOpened}
+            onClose={() => {
+              setDeleteModalOpened(false);
+              setSelectedRecord(null);
+            }}
+            onConfirm={handleDeleteConfirm}
+            title="Delete Accessory"
+            message="Are you sure you want to delete this accessory? This action cannot be undone."
+            loading={deleting}
+          />
+        </>
+      )}
     </Stack>
   );
 }

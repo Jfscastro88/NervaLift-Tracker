@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Center, Loader } from '@mantine/core';
 import { supabase } from './lib/supabase';
+import { AuthProvider } from './context/AuthProvider';
+import { useAuth } from './hooks/useAuth';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AddRecord from './pages/AddRecord';
@@ -16,6 +18,88 @@ function ProtectedRoute({ session, children }) {
   }
 
   return <AppLayout>{children}</AppLayout>;
+}
+
+function GuestRestrictedRoute({ children }) {
+  const { isGuest, roleLoading } = useAuth();
+
+  if (roleLoading) {
+    return (
+      <Center h={300}>
+        <Loader color="green" />
+      </Center>
+    );
+  }
+
+  if (isGuest) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+}
+
+function AppRoutes({ session }) {
+  const { roleLoading } = useAuth();
+
+  if (session && roleLoading) {
+    return (
+      <Center h="100vh" bg="black">
+        <Loader color="green" />
+      </Center>
+    );
+  }
+
+  return (
+    <Routes>
+      <Route
+        path="/login"
+        element={session ? <Navigate to="/" replace /> : <Login />}
+      />
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute session={session}>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/add"
+        element={
+          <ProtectedRoute session={session}>
+            <GuestRestrictedRoute>
+              <AddRecord />
+            </GuestRestrictedRoute>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/maintenance"
+        element={
+          <ProtectedRoute session={session}>
+            <Maintenance />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/accessories"
+        element={
+          <ProtectedRoute session={session}>
+            <Accessories />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/analytics"
+        element={
+          <ProtectedRoute session={session}>
+            <Analytics />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
 }
 
 export default function App() {
@@ -47,53 +131,9 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route
-          path="/login"
-          element={session ? <Navigate to="/" replace /> : <Login />}
-        />
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute session={session}>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/add"
-          element={
-            <ProtectedRoute session={session}>
-              <AddRecord />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/maintenance"
-          element={
-            <ProtectedRoute session={session}>
-              <Maintenance />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/accessories"
-          element={
-            <ProtectedRoute session={session}>
-              <Accessories />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/analytics"
-          element={
-            <ProtectedRoute session={session}>
-              <Analytics />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <AuthProvider session={session}>
+        <AppRoutes session={session} />
+      </AuthProvider>
     </BrowserRouter>
   );
 }
